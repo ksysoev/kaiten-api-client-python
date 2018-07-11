@@ -10,6 +10,7 @@ import base64
 import json
 import weakref
 import pprint
+import urllib
 
 from kaiten.exceptions import *
 
@@ -108,17 +109,25 @@ class Client (KaitenObject):
         """
         conn = http.client.HTTPSConnection( self.host )
 
+        request_body = ''
+        if method == 'GET' :
+            query_string = urllib.parse.urlencode(params)
+            if query_string:
+                path = '?'.join([ path, query_string ])
+        else :
+            request_body = json.dumps(params)
+
         conn.request(
             method,
             self.__get_url_for__(path),
-            json.dumps(params),
+            request_body,
             self.__get_headers__(),
         )
 
         if self.debug :
             print(
                 "Sending request to {} with method {}.\nRequest body:\n{}\n".format(
-                    path, method, json.dumps(params, sort_keys=True, indent=4)
+                    path, method, request_body
                 )
             )
         resp = conn.getresponse()
